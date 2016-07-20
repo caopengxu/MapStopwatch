@@ -17,7 +17,6 @@
 {
     BOOL _judgeSuspend;  // 暂停or开始
     BOOL _judgeRiding;  // 是否开始骑行
-    BOOL _judgeJump;  // 判断是否跳转了地图页（已经加载了地图）
 }
 @property (weak, nonatomic) IBOutlet UIScrollView *mainScroll;
 @property (nonatomic, strong) MapRidingView *mapRidingView;
@@ -29,36 +28,27 @@
 
 @implementation RidingController
 
-#pragma mark === 界面显示前后
-- (void)viewWillAppear:(BOOL)animated
-{
-    [super viewWillAppear:animated];
-    
-    if (!_judgeJump && !_judgeRiding)
-    {
-        //当前页面为地图页
-        [_mapRidingView mapStart];
-        [_mapRidingView locationStart];
-    }    
-}
-
-
-
 #pragma mark === viewDidLoad
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    _judgeRiding = NO;
-    
     self.mainScroll.contentSize = CGSizeMake(2 * __ScreenWidth, 0);
     [self.mainScroll setContentOffset:CGPointMake(0, 0)];
     
-//    //添加通知
-    NSNotificationCenter * center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self selector:@selector(noRiding:) name:@"riding" object:nil];
-    
     // 创建TableView和MapView
     [self addTableAndMap];
+    
+    // 把地图先加载好
+    [_mapRidingView mapStart];
+    
+    // 开始定位
+    [_mapRidingView locationStart];
+    
+    // 1秒后停止定位
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,(int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        
+        [_mapRidingView.locService stopUserLocationService];
+    });
 }
 
 
@@ -74,7 +64,7 @@
     [_tableRidingView.turnBtn addTarget:self action:@selector(oneTurnBtnClick) forControlEvents:UIControlEventTouchUpInside];
     [_tableRidingView.startBtn addTarget:self action:@selector(startBtnClick) forControlEvents:UIControlEventTouchUpInside];
     [_tableRidingView.suspendBtn addTarget:self action:@selector(suspendBtnClick) forControlEvents:UIControlEventTouchUpInside];
-    [_tableRidingView.endBtn addTarget:self action:@selector(showAlert) forControlEvents:UIControlEventTouchUpInside];
+    [_tableRidingView.endBtn addTarget:self action:@selector(endBtnClick) forControlEvents:UIControlEventTouchUpInside];
     _tableRidingView.frame = CGRectMake(0, 0, self.mainScroll.frame.size.width, self.mainScroll.frame.size.height);
     [self.mainScroll addSubview:_tableRidingView];
     
@@ -92,10 +82,10 @@
 - (void)oneTurnBtnClick
 {
     [self.mainScroll setContentOffset:CGPointMake(__ScreenWidth, 0) animated:YES];
-    if (!_judgeRiding)
+    
+    if (!_judgeRiding)  // 没有开始骑行
     {
-        //没有在骑行
-        [_mapRidingView mapStart];
+        // 开始定位
         [_mapRidingView locationStart];
     }
 }
@@ -103,9 +93,10 @@
 - (void)twoTurnBtnClick
 {
     [self.mainScroll setContentOffset:CGPointMake(0, 0) animated:YES];
-    if (!_judgeRiding)
+    
+    if (!_judgeRiding)  // 没有开始骑行
     {
-        //没有在骑行
+        // 停止定位
         [_mapRidingView.locService stopUserLocationService];
     }
 }
@@ -117,17 +108,8 @@
 {
     _judgeRiding = YES;
     
-    if (!_judgeJump)
-    {
-        //当前页面为地图页
-        [_mapRidingView mapStart];
-        [_mapRidingView locationStart];
-    }
-    else
-    {
-        //当前页面在码表页
-        [_mapRidingView locationStart];
-    }
+    // 开始定位
+    [_mapRidingView locationStart];
     
     [_tableRidingView startBtnClick];
     [_mapRidingView startBtnClick];
@@ -171,23 +153,14 @@
 
 
 
-#pragma mark === 显示提示（结束骑行）
-- (void)showAlert
+#pragma mark === 结束骑行
+- (void)endBtnClick
 {
     _judgeRiding = NO;
     
     [_tableRidingView endBtnClick];
     [_mapRidingView endBtnClick];
     [self.secondTimer invalidate];
-}
-
-
-
-
--(void)noRiding:(id)sender{
-    if (!_judgeRiding) {
-        [_mapRidingView.locService stopUserLocationService];
-    }
 }
 
 

@@ -29,12 +29,12 @@
     if (!_judgeSuspend)
     {
         _judgeSuspend = YES;
-        [self.suspendBtn setImage:[UIImage imageNamed:@"暂停1"] forState:UIControlStateNormal];
+        [self.suspendBtn setTitle:@"继续" forState:UIControlStateNormal];
     }
     else
     {
         _judgeSuspend = NO;
-        [self.suspendBtn setImage:[UIImage imageNamed:@"暂停"] forState:UIControlStateNormal];
+        [self.suspendBtn setTitle:@"暂停" forState:UIControlStateNormal];
     }
 }
 - (void)endBtnClick
