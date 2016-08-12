@@ -230,6 +230,12 @@
     NSString *str_second = [NSString stringWithFormat:@"%02d", _secondsCountDown%60];
     NSString *format_time = [NSString stringWithFormat:@"%@:%@:%@", str_hour, str_minute, str_second];
     self.timeL.text = [NSString stringWithFormat:@"%@", format_time];
+    
+    // 同步数据
+    if (self.completion)
+    {
+        self.completion();
+    }
 }
 #pragma mark === 划线
 - (void)drawLineGo

@@ -11,7 +11,6 @@
 #import "MapRidingView.h"
 
 #define __ScreenWidth    [[UIScreen mainScreen] bounds].size.width
-#define __ScreenHeight   [[UIScreen mainScreen] bounds].size.height
 
 @interface RidingController ()
 {
@@ -21,7 +20,6 @@
 @property (weak, nonatomic) IBOutlet UIScrollView *mainScroll;
 @property (nonatomic, strong) MapRidingView *mapRidingView;
 @property (nonatomic, strong) TableRidingView *tableRidingView;
-@property (nonatomic, strong) NSTimer *secondTimer;
 @end
 
 
@@ -74,6 +72,16 @@
     [_mapRidingView.turnBtn addTarget:self action:@selector(twoTurnBtnClick) forControlEvents:UIControlEventTouchUpInside];
     _mapRidingView.frame = CGRectMake(__ScreenWidth, 0, self.mainScroll.frame.size.width, self.mainScroll.frame.size.height);
     [self.mainScroll addSubview:_mapRidingView];
+    
+    __weak typeof(self)weakSelf = self;
+    _mapRidingView.completion = ^(){
+        // 同步数据
+        weakSelf.tableRidingView.speedL.text = weakSelf.mapRidingView.speedL.text;
+        weakSelf.tableRidingView.timeL.text = weakSelf.mapRidingView.timeL.text;
+        weakSelf.tableRidingView.distanceL.text = weakSelf.mapRidingView.distanceL.text;
+        weakSelf.tableRidingView.kcalL.text = weakSelf.mapRidingView.kcalL.text;
+        weakSelf.tableRidingView.maxSpeedL.text = weakSelf.mapRidingView.maxSpeedL.text;
+    };
 }
 
 
@@ -113,18 +121,6 @@
     
     [_tableRidingView startBtnClick];
     [_mapRidingView startBtnClick];
-    
-    self.secondTimer = [NSTimer timerWithTimeInterval:1 target:self selector:@selector(syncDate) userInfo:nil repeats:YES];
-    [[NSRunLoop currentRunLoop] addTimer:self.secondTimer forMode:NSRunLoopCommonModes];
-}
-#pragma mark === 同步数据
-- (void)syncDate
-{
-    _tableRidingView.speedL.text = _mapRidingView.speedL.text;
-    _tableRidingView.timeL.text = _mapRidingView.timeL.text;
-    _tableRidingView.distanceL.text = _mapRidingView.distanceL.text;
-    _tableRidingView.kcalL.text = _mapRidingView.kcalL.text;
-    _tableRidingView.maxSpeedL.text = _mapRidingView.maxSpeedL.text;
 }
 #pragma mark === 暂停or开始
 - (void)suspendBtnClick
@@ -137,17 +133,12 @@
         //暂停骑行
         _judgeSuspend = YES;
         _judgeRiding = NO;
-        
-        [self.secondTimer invalidate];//定时器暂停
     }
     else
     {
         //继续骑行
         _judgeSuspend = NO;
         _judgeRiding = YES;
-        
-        self.secondTimer = [NSTimer timerWithTimeInterval:1 target:self selector:@selector(syncDate) userInfo:nil repeats:YES];
-        [[NSRunLoop currentRunLoop] addTimer:self.secondTimer forMode:NSRunLoopCommonModes];
     }
 }
 
@@ -160,7 +151,6 @@
     
     [_tableRidingView endBtnClick];
     [_mapRidingView endBtnClick];
-    [self.secondTimer invalidate];
 }
 
 

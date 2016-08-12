@@ -26,4 +26,5 @@
 - (void)endBtnClick;  // 完成
 - (void)mapStart;
 - (void)locationStart;
+@property (nonatomic, strong) void (^completion) ();
 @end
